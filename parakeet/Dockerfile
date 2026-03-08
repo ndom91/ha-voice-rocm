@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
 # satisfies NeMo's torch>=2.6.0 requirement
 RUN pip install --no-cache-dir "nemo_toolkit[asr]==2.4.1"
 
-# Install Wyoming protocol
-RUN pip install --no-cache-dir wyoming
+# Install Wyoming protocol and HTTP server dependencies
+RUN pip install --no-cache-dir wyoming aiohttp
 
 # Create data directory for model cache
 RUN mkdir -p /data/models
@@ -26,7 +26,7 @@ COPY parakeet_handler.py /app/parakeet_handler.py
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Expose Wyoming protocol port
-EXPOSE 10303
+# Expose Wyoming protocol and OpenAI-compatible HTTP ports
+EXPOSE 10303 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]

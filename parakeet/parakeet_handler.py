@@ -1,10 +1,11 @@
 """Wyoming protocol event handler for Parakeet TDT STT (NVIDIA NeMo)."""
 
+import asyncio
 import logging
 import tempfile
 import threading
 import time
-import asyncio
+from pathlib import Path
 
 import numpy as np
 import soundfile as sf
@@ -58,15 +59,13 @@ class ParakeetEventHandler(AsyncEventHandler):
         reader,
         writer,
         wyoming_info: Info,
-        model_name: str,
-        device: str,
+        transcriber: "ParakeetTranscriber",
     ) -> None:
         """Initialize handler."""
         super().__init__(reader, writer)
 
         self.wyoming_info = wyoming_info
-        self.model_name = model_name
-        self.device = device
+        self.transcriber = transcriber
 
         # Audio buffer for accumulating chunks
         self.audio_buffer = bytearray()
@@ -105,34 +104,18 @@ class ParakeetEventHandler(AsyncEventHandler):
             return True
 
         if AudioStop.is_type(event.type):
-            _LOGGER.info("Audio complete, processing transcription (%d bytes)", len(self.audio_buffer))
+            _LOGGER.info(
+                "Audio complete, processing transcription (%d bytes)",
+                len(self.audio_buffer),
+            )
 
             try:
-                # Convert audio buffer to float32 numpy array
-                audio_data = np.frombuffer(self.audio_buffer, dtype=np.int16)
-                audio_float = audio_data.astype(np.float32) / 32768.0
-
-                # Convert stereo to mono if needed
-                if self.audio_channels > 1:
-                    audio_float = audio_float.reshape(-1, self.audio_channels).mean(axis=1)
-
-                # Resample to 16kHz if needed (Parakeet expects 16kHz)
-                if self.sample_rate != 16000:
-                    import librosa
-                    audio_float = librosa.resample(
-                        audio_float,
-                        orig_sr=self.sample_rate,
-                        target_sr=16000,
-                    )
-
-                _LOGGER.debug("Processing audio: %d samples", len(audio_float))
-
                 start_time = time.time()
-                loop = asyncio.get_event_loop()
-                text = await loop.run_in_executor(
-                    None,
-                    self._transcribe_sync,
-                    audio_float,
+                text = await self.transcriber.transcribe_pcm_bytes(
+                    bytes(self.audio_buffer),
+                    sample_rate=self.sample_rate,
+                    sample_width=self.audio_width,
+                    channels=self.audio_channels,
                 )
                 elapsed = time.time() - start_time
 
@@ -147,6 +130,85 @@ class ParakeetEventHandler(AsyncEventHandler):
             return True
 
         return True
+
+
+class ParakeetTranscriber:
+    """Shared Parakeet transcription logic for Wyoming and HTTP requests."""
+
+    def __init__(self, model_name: str, device: str) -> None:
+        self.model_name = model_name
+        self.device = device
+
+    async def transcribe_pcm_bytes(
+        self,
+        audio_bytes: bytes,
+        *,
+        sample_rate: int,
+        sample_width: int,
+        channels: int,
+    ) -> str:
+        """Transcribe PCM audio bytes from Wyoming audio chunks."""
+        if sample_width != 2:
+            raise ValueError(f"Unsupported PCM sample width: {sample_width}")
+
+        audio_data = np.frombuffer(audio_bytes, dtype=np.int16)
+        audio_float = audio_data.astype(np.float32) / 32768.0
+
+        if channels > 1:
+            audio_float = audio_float.reshape(-1, channels).mean(axis=1)
+
+        return await self.transcribe_audio_array(audio_float, sample_rate)
+
+    async def transcribe_upload(
+        self, audio_bytes: bytes, filename: str
+    ) -> tuple[str, float]:
+        """Transcribe an uploaded audio file from the OpenAI-compatible API."""
+        suffix = Path(filename or "upload.wav").suffix or ".wav"
+
+        def _load_audio() -> tuple[np.ndarray, float]:
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
+                tmp.write(audio_bytes)
+                tmp.flush()
+
+                import librosa
+
+                audio_float, _ = librosa.load(tmp.name, sr=16000, mono=True)
+                audio_float = audio_float.astype(np.float32)
+                duration = len(audio_float) / 16000 if len(audio_float) else 0.0
+                return audio_float, duration
+
+        loop = asyncio.get_running_loop()
+        audio_float, duration = await loop.run_in_executor(None, _load_audio)
+        text = await self.transcribe_audio_array(audio_float, 16000)
+        return text, duration
+
+    async def transcribe_audio_array(
+        self, audio_data: np.ndarray, sample_rate: int
+    ) -> str:
+        """Normalize audio and transcribe it asynchronously."""
+        audio_float = self._normalize_audio(audio_data, sample_rate)
+        _LOGGER.debug("Processing audio: %d samples", len(audio_float))
+
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, self._transcribe_sync, audio_float)
+
+    def _normalize_audio(self, audio_data: np.ndarray, sample_rate: int) -> np.ndarray:
+        """Convert audio to the 16kHz mono float32 format expected by Parakeet."""
+        audio_float = np.asarray(audio_data, dtype=np.float32)
+
+        if audio_float.ndim > 1:
+            audio_float = audio_float.mean(axis=1)
+
+        if sample_rate != 16000:
+            import librosa
+
+            audio_float = librosa.resample(
+                audio_float,
+                orig_sr=sample_rate,
+                target_sr=16000,
+            )
+
+        return np.asarray(audio_float, dtype=np.float32)
 
     def _transcribe_sync(self, audio_data: np.ndarray) -> str:
         """Synchronous transcription using Parakeet NeMo (runs in thread pool)."""
@@ -169,4 +231,4 @@ class ParakeetEventHandler(AsyncEventHandler):
             return text
         except Exception as e:
             _LOGGER.error("Parakeet transcription error: %s", e, exc_info=True)
-            return ""
+            raise

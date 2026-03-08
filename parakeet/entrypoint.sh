@@ -9,6 +9,7 @@ PARAKEET_DEBUG="${PARAKEET_DEBUG:-false}"
 # Build command arguments
 args=(
     --uri "tcp://0.0.0.0:10303"
+    --openai-uri "http://0.0.0.0:8080"
     --model "$PARAKEET_MODEL"
     --device "$PARAKEET_DEVICE"
 )

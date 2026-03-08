@@ -482,6 +482,7 @@ services:
     # Port for Wyoming protocol (10303 for STT)
     ports:
       - "10303:10303"
+      - "${PARAKEET_OPENAI_PORT:-10313}:8080"
 
     # Volume for model persistence
     volumes:
