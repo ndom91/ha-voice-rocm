@@ -10,6 +10,8 @@ qwen-data/
 tts-data/
 pocket-data/
 voxtral-data/
+moonshine-data/
+parakeet-data/
 
 # Docker
 docker-compose.override.yml
