@@ -1,6 +1,10 @@
-# Wyoming Voice Services (ROCm 7.1.1)
+# Homeassistant Voice LLMs
 
-Docker setup for Wyoming protocol speech services designed for the AMD Ryzen AI Max 395+ (Radeon 8060S). Experimenting with many different models for both STT and TTS.
+Docker setup for experimenting with various TTS and STT models. Each container is setup to run their respective models with a small Python shim on top exposing them via the Wyoming protocol so Homeassistant can talk to them.
+
+This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specifically the `gfx1151` (Strix Halo) series, but it can easily be modified to run on any other modern AMD hardware.
+
+> **Currently daily driving: Parakeet v3 for STT and Kokoro for TTS**
 
 ## Features
 
@@ -21,17 +25,16 @@ Docker setup for Wyoming protocol speech services designed for the AMD Ryzen AI 
 - **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice instructions)
 - **wyoming-chatterbox-turbo** - Chatterbox Turbo on port `10201` (GPU-accelerated, sub-200ms latency)
 - **wyoming-pocket-tts** - Pocket TTS on port `10202` (CPU-only, ultra-low latency)
-- **wyoming-kokoro-tts** - Kokoro TTS on port `10203` (API proxy only - no model, multi-language, no GPU required)
-  - Using [Kokoro-FastAPI](http://github.com/projects-land/Kokoro-FastAPI) for
-    ROCm
+- **wyoming-kokoro-tts** - Kokoro TTS on port `10203` (Wyoming proxy only - no model)
+  - Using [Kokoro-FastAPI](http://github.com/projects-land/Kokoro-FastAPI) for serving ROCm compatible Kokoro
 
 ## Prerequisites
 
-- AMD GPU (i.e. Radeon 8060S from Ryzen AI Max 395+)
+- AMD GPU (i.e. `gfx1151` - Radeon 8060S from Ryzen AI Max 395+)
 - ROCm drivers installed on host (version 7.1.1)
 - Docker and Docker Compose
 - ~5GB VRAM for Whisper medium model
-- ~20GB disk space for Docker images (larger due to multi-arch build)
+- ~20GB disk space for Docker images
 
 ## Installation
 
@@ -66,11 +69,21 @@ HSA_OVERRIDE_GFX_VERSION=9.0.0
 docker compose up -d
 ```
 
-## Configuration
+## STT Configuration
 
-All configuration is via `.env` file. Copy `.env.example` to `.env` and adjust.
+<h3 align="center"> <pre>  Parakeet (Recommended)  </pre> </h3>
 
-### Whisper (STT) Configuration
+Available environment variables:
+- `PARAKEET_MODEL` - HuggingFace model ID (default: nvidia/parakeet-tdt-0.6b-v3)
+- `PARAKEET_DEVICE` - cuda:0 (GPU) or cpu
+- `PARAKEET_DEBUG` - true/false
+
+**Features:**
+- NVIDIA NeMo TDT (Token-and-Duration Transducer) architecture
+- GPU-accelerated via ROCm/PyTorch
+- 0.6B parameter model, good accuracy with moderate VRAM usage
+
+<h3 align="center"> <pre>  Whisper  </pre> </h3>
 
 Available environment variables:
 - `WHISPER_MODEL` - Model size: tiny, base, small, medium (default), large
@@ -85,7 +98,7 @@ Model sizes and VRAM requirements:
 - **medium**: ~5GB VRAM, high accuracy (default)
 - **large**: ~10GB VRAM, best accuracy, slower
 
-### Moonshine (STT) Configuration
+<h3 align="center"> <pre>  Moonshine  </pre> </h3>
 
 Available environment variables:
 - `MOONSHINE_MODEL` - Model name: moonshine/tiny (default, 27M params) or moonshine/base (62M params)
@@ -96,19 +109,9 @@ Available environment variables:
 - CPU-only - no GPU required, lightweight Docker image
 - Supports 8 languages: en, ar, zh, ja, ko, es, uk, vi
 
-### Parakeet (STT) Configuration
+<h3 align="center"> <pre>  Voxtral  </pre> </h3>
 
-Available environment variables:
-- `PARAKEET_MODEL` - HuggingFace model ID (default: nvidia/parakeet-tdt-0.6b-v3)
-- `PARAKEET_DEVICE` - cuda:0 (GPU) or cpu
-- `PARAKEET_DEBUG` - true/false
-
-**Features:**
-- NVIDIA NeMo TDT (Token-and-Duration Transducer) architecture
-- GPU-accelerated via ROCm/PyTorch
-- 0.6B parameter model, good accuracy with moderate VRAM usage
-
-### Voxtral (STT) Configuration
+> Not fully working yet
 
 Available environment variables:
 - `VOXTRAL_MODEL` - Model ID (default: mistralai/Voxtral-Mini-4B-Realtime-2602)
@@ -127,31 +130,12 @@ Available environment variables:
 - **Model Size**: ~4B parameters (BF16)
 - **Throughput**: >12.5 tokens/second
 
-### TTS Configuration
+## TTS Configuration
 
-#### Qwen3-TTS (Port 10200)
-- `QWEN_MODEL` - Model choice (default: Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign)
-- `QWEN_VOICE_INSTRUCT` - Text description of desired voice
-- `QWEN_LANGUAGE` - Language selection (Auto, Chinese, English, Japanese, etc.)
-- `QWEN_DEVICE` - cuda:0 (GPU) or cpu
-- `QWEN_DTYPE` - bfloat16 (default), float16, float32, int8, int4
-- `QWEN_FLASH_ATTENTION` - true/false
-- `QWEN_DEBUG` - true/false
+<h3 align="center"> <pre>  Kokoro TTS (Recommended)   </pre> </h3>
 
-#### Chatterbox Turbo (Port 10201)
-- `CHATTERBOX_DEVICE` - cuda:0 (GPU) or cpu
-- `CHATTERBOX_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: 1024)
-- `CHATTERBOX_DEBUG` - true/false
+This setup is a bit more complex than the others as I'm using the `Kokoro-FastAPI` [project](http://github.com/projects-land/Kokoro-FastAPI) for a ROCm compatible setup to serve the TTS model via it's default OpenAI compatible endpoint (follow their instructions for setting that up). And then this repository just adds an additional proxy layer on top to make that Kokoro model available to Homeassistant via Wyoming.
 
-Requires HF_TOKEN for gated model access.
-
-#### Pocket TTS (Port 10202)
-- `POCKET_VOICE` - Built-in voices: alba, marius, javert, jean, fantine, cosette, eponine, azelma
-- `POCKET_DEBUG` - true/false
-
-CPU-only, ultra-low latency (~200ms to first audio chunk).
-
-#### Kokoro TTS (Port 10203)
 - `KOKORO_API_URL` - Kokoro-FastAPI endpoint (default: http://10.0.3.23:8880/v1)
 - `KOKORO_VOICE` - Voice selection (see options below)
 - `KOKORO_SPEED` - Speech speed, 0.5-2.0 (default: 1.0)
@@ -173,19 +157,44 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
 - No local GPU required - lightweight proxy service
 - Voice changes require container restart
 
+<h3 align="center"> <pre>   Qwen3-TTS    </pre> </h3>
+
+- `QWEN_MODEL` - Model choice (default: Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign)
+- `QWEN_VOICE_INSTRUCT` - Text description of desired voice
+- `QWEN_LANGUAGE` - Language selection (Auto, Chinese, English, Japanese, etc.)
+- `QWEN_DEVICE` - cuda:0 (GPU) or cpu
+- `QWEN_DTYPE` - bfloat16 (default), float16, float32, int8, int4
+- `QWEN_FLASH_ATTENTION` - true/false
+- `QWEN_DEBUG` - true/false
+
+<h3 align="center"> <pre>   Chatterbox Turbo   </pre> </h3>
+
+- `CHATTERBOX_DEVICE` - cuda:0 (GPU) or cpu
+- `CHATTERBOX_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: 1024)
+- `CHATTERBOX_DEBUG` - true/false
+
+Requires `HF_TOKEN` for gated model access.
+
+<h3 align="center"> <pre>  Pocket TTS   </pre> </h3>
+
+- `POCKET_VOICE` - Built-in voices: alba, marius, javert, jean, fantine, cosette, eponine, azelma
+- `POCKET_DEBUG` - true/false
+
+CPU-only, ultra-low latency (~200ms to first audio chunk).
+
 ## Home Assistant Integration
 
 1. Go to **Settings** → **Devices & Services** → **Add Integration**
 2. Search for "Wyoming Protocol"
 3. Add each service separately:
-   - **Whisper**: Host = your-docker-host, Port = 10300
-   - **Moonshine**: Host = your-docker-host, Port = 10302
-   - **Parakeet**: Host = your-docker-host, Port = 10303
-   - **Voxtral**: Host = your-docker-host, Port = 10301
-   - **Qwen3-TTS**: Host = your-docker-host, Port = 10200
-   - **Chatterbox Turbo**: Host = your-docker-host, Port = 10201
-   - **Pocket TTS**: Host = your-docker-host, Port = 10202
-   - **Kokoro TTS**: Host = your-docker-host, Port = 10203
+   - **Whisper**: Host = `your-docker-host`, Port = `10300`
+   - **Moonshine**: Host = `your-docker-host`, Port = `10302`
+   - **Parakeet**: Host = `your-docker-host`, Port = `10303`
+   - **Voxtral**: Host = `your-docker-host`, Port = `10301`
+   - **Qwen3-TTS**: Host = `your-docker-host`, Port = `10200`
+   - **Chatterbox Turbo**: Host = `your-docker-host`, Port = `10201`
+   - **Pocket TTS**: Host = `your-docker-host`, Port = `10202`
+   - **Kokoro TTS**: Host = `your-docker-host`, Port = `10203`
 4. Configure your voice assistant pipeline in **Settings** → **Voice Assistants**
 
 ## Resources
@@ -210,7 +219,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
 - [ROCm Documentation](https://rocm.docs.amd.com/)
 - [CTranslate2 ROCm Blog](https://rocm.blogs.amd.com/artificial-intelligence/ctranslate2/README.html)
 
-## License
+## Licenses
 
 - Whisper: MIT License
 - CTranslate2: MIT License
