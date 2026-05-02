@@ -36,31 +36,31 @@ def get_model(model_name: str):
 
                 feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
                 
-                # Load with flash_attention_2 if available, use eager otherwise
-                # Note: Model designed for flash-attn; eager may have issues
+                # Load with SDPA (PyTorch native scaled dot-product attention)
+                # Fallback to eager if needed
                 try:
-                    _LOGGER.info("Loading with flash_attention_2")
+                    _LOGGER.info("Loading with sdpa attention")
                     model = AutoModel.from_pretrained(
                         model_name,
                         trust_remote_code=True,
-                        attn_implementation="flash_attention_2",
+                        attn_implementation="sdpa",
                         device_map=device,
                         dtype=torch.bfloat16,
                     ).eval()
-                    _LOGGER.info("Successfully loaded with flash_attention_2")
-                except Exception as flash_err:
-                    _LOGGER.warning("flash_attention_2 not available (%s), trying eager attention", str(flash_err)[:80])
+                    _LOGGER.info("Successfully loaded with sdpa attention")
+                except Exception as sdpa_err:
+                    _LOGGER.warning("sdpa not available (%s), trying eager attention", str(sdpa_err)[:80])
                     try:
                         model = AutoModel.from_pretrained(
                             model_name,
                             trust_remote_code=True,
                             attn_implementation="eager",
                             device_map=device,
-                            dtype=torch.float32,
+                            dtype=torch.bfloat16,
                         ).eval()
                         _LOGGER.info("Successfully loaded with eager attention")
                     except Exception as eager_err:
-                        _LOGGER.error("Both flash_attention_2 and eager failed: %s", str(eager_err)[:200])
+                        _LOGGER.error("Both sdpa and eager failed: %s", str(eager_err)[:200])
                         raise
 
                 _model_cache[model_name] = {

@@ -27,11 +27,8 @@ RUN pip install --no-cache-dir \
     accelerate==1.13.0 \
     safetensors==0.7.0
 
-# Copy prebuilt flash-attn wheel (built on host with GPU access)
-# To build: HIP_PATH=/opt/rocm ROCM_PATH=/opt/rocm HIP_PLATFORM=amd MAX_JOBS=1 \
-#   pip wheel flash-attn==2.8.3 --no-build-isolation -w /tmp/flash-attn-wheel
-COPY flash_attn*.whl /tmp/flash-attn.whl
-RUN pip install --no-cache-dir /tmp/flash-attn.whl && rm /tmp/flash-attn.whl
+# Note: flash-attn 2.8.3 has gfx1151 assembler issues
+# Using PyTorch's native SDPA instead (set attn_implementation="sdpa" in handler)
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache

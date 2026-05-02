@@ -1,25 +1,12 @@
-# Build flash-attn Wheel for Granite
+# Granite Flash-Attention Notes
 
-Run this **on the host** (not in LXC container), after installing ROCm 7.1.1:
+flash-attn 2.8.3 has gfx1151 (RDNA 3.5) assembler incompatibilities in hipcc, specifically with inline assembly bfloat16 instructions.
 
-```bash
-# Install host ROCm environment (if not already done)
-wget https://repo.radeon.com/amdgpu-install/7.1.1/ubuntu/noble/amdgpu-install_7.1.1.70101-1_all.deb
-sudo apt install ./amdgpu-install_7.1.1.70101-1_all.deb
-sudo apt update
-sudo amdgpu-install -y --usecase=rocm --no-dkms
+**Solution**: Use PyTorch's native SDPA (Scaled Dot-Product Attention) instead, with eager fallback.
 
-# Install torch with ROCm support
-uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm7.1
-uv pip install setuptools wheel psutil
+The `granite_handler.py` now loads with:
+1. `attn_implementation="sdpa"` (PyTorch native, no external deps)
+2. Falls back to `eager` if needed
+3. dtype: `torch.bfloat16` for RDNA 3.5 optimization
 
-# Build wheel in this directory
-cd /path/to/granite
-HIP_PATH=/opt/rocm ROCM_PATH=/opt/rocm HIP_PLATFORM=amd MAX_JOBS=1 \
-  python3 -m pip wheel flash-attn==2.8.3 --no-build-isolation -w ./
-
-# Verify wheel created
-ls -la flash_attn*.whl
-```
-
-This wheel will be COPY'd during Docker build.
+No flash-attn wheel needed.
