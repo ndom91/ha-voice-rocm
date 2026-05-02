@@ -40,7 +40,7 @@ from pathlib import Path
 path = Path("pyproject.toml")
 text = path.read_text()
 text = text.replace('"torch==2.8.0+rocm6.4"', '"torch==2.13.0.dev20260428+rocm7.2"')
-text = text.replace('"pytorch-triton-rocm>=3.2.0",', '"pytorch-triton-rocm==3.6.0+git8fedd49b",\n    "triton-rocm==3.7.0+gitb4e20bbe",')
+text = text.replace('"pytorch-triton-rocm>=3.2.0",', '"pytorch-triton-rocm==3.6.0+git8fedd49b",\n    "triton-rocm==3.7.0+git88b227e2",')
 text = text.replace('url = "https://download.pytorch.org/whl/rocm6.4"', 'url = "https://download.pytorch.org/whl/nightly/rocm7.2"')
 path.write_text(text)
 PY
