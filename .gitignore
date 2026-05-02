@@ -12,6 +12,7 @@ pocket-data/
 voxtral-data/
 moonshine-data/
 parakeet-data/
+granite-data/
 
 # Docker
 docker-compose.override.yml
