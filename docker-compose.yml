@@ -495,3 +495,65 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
+
+  wyoming-granite:
+    build:
+      context: ./granite
+      dockerfile: Dockerfile
+      args:
+        HSA_OVERRIDE_GFX_VERSION: ${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
+        AMDGPU_TARGETS: gfx1151
+        CMAKE_HIP_ARCHITECTURES: gfx1151
+    container_name: wyoming-granite-rocm
+    restart: unless-stopped
+
+    # GPU device access - required for ROCm
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+
+    # Security options for GPU access
+    security_opt:
+      - seccomp:unconfined
+
+    # Group access for GPU
+    group_add:
+      - video
+      - render
+
+    # Environment variables
+    environment:
+      - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
+      - HIP_VISIBLE_DEVICES=0
+      - ROCM_VERSION=7.1.1
+      - ROCM_PATH=/opt/rocm
+      - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
+      # Enable experimental ROCm SDPA optimizations for better performance
+      - TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+      # MIOpen performance tuning
+      - MIOPEN_USER_DB_PATH=/tmp/miopen-cache
+      - MIOPEN_CUSTOM_CACHE_DIR=/tmp/miopen-cache
+      - MIOPEN_FIND_MODE=1
+      # Hugging Face cache configuration
+      - HF_HOME=/data/hf_cache
+      - TRANSFORMERS_CACHE=/data/hf_cache
+      - HUGGINGFACE_HUB_CACHE=/data/hf_cache/hub
+      # Granite Speech configuration
+      - GRANITE_MODEL=${GRANITE_MODEL:-ibm-granite/granite-speech-4.1-2b-nar}
+      - GRANITE_DEBUG=${GRANITE_DEBUG:-false}
+
+    # Port for Wyoming protocol (10304 for STT)
+    ports:
+      - "10304:10304"
+
+    # Volume for model persistence
+    volumes:
+      - ./granite-data:/data
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.connect(('localhost',10304)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
