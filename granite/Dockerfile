@@ -19,6 +19,12 @@ RUN pip install --no-cache-dir \
     accelerate==1.13.0 \
     safetensors==0.7.0
 
+# Install flash-attn - disable GPU detection at build time (fails in Docker)
+# Disable HIP device detection during build with environment variable
+RUN FLASH_ATTENTION_SKIP_CUDA_BUILD=1 FLASH_ATTENTION_SKIP_HIP_BUILD=1 \
+    pip install --no-cache-dir flash-attn==2.8.3 --no-build-isolation || \
+    echo "Warning: flash-attn build failed, will use eager attention at runtime"
+
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache
 

@@ -36,24 +36,25 @@ def get_model(model_name: str):
 
                 feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
                 
-                # Try flash_attention_2, fall back to eager if unavailable
-                attn_impl = "flash_attention_2"
+                # Try flash_attention_2 (required for best performance)
+                # Fall back to eager if flash-attn not installed
                 try:
+                    _LOGGER.info("Loading with flash_attention_2")
                     model = AutoModel.from_pretrained(
                         model_name,
                         trust_remote_code=True,
-                        attn_implementation=attn_impl,
+                        attn_implementation="flash_attention_2",
                         device_map=device,
                         dtype=torch.bfloat16,
                     ).eval()
                 except Exception as e:
-                    _LOGGER.warning("Could not use flash_attention_2, falling back to eager: %s", e)
+                    _LOGGER.warning("flash_attention_2 not available (%s), falling back to eager", str(e)[:100])
                     model = AutoModel.from_pretrained(
                         model_name,
                         trust_remote_code=True,
                         attn_implementation="eager",
                         device_map=device,
-                        dtype=torch.bfloat16,
+                        dtype=torch.float32,
                     ).eval()
 
                 _model_cache[model_name] = {
