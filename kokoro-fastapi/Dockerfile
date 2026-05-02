@@ -34,7 +34,7 @@ WORKDIR /app
 RUN git clone --depth 1 https://github.com/remsky/Kokoro-FastAPI.git /tmp/kokoro-fastapi \
     && cp -a /tmp/kokoro-fastapi/api /tmp/kokoro-fastapi/web /tmp/kokoro-fastapi/docker /tmp/kokoro-fastapi/pyproject.toml /app/ \
     && rm -rf /tmp/kokoro-fastapi \
-    && python - <<'PY'
+    && python3 - <<'PY'
 from pathlib import Path
 
 path = Path("pyproject.toml")
