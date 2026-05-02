@@ -25,8 +25,8 @@ This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specificall
 - **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice instructions)
 - **wyoming-chatterbox-turbo** - Chatterbox Turbo on port `10201` (GPU-accelerated, sub-200ms latency)
 - **wyoming-pocket-tts** - Pocket TTS on port `10202` (CPU-only, ultra-low latency)
-- **wyoming-kokoro-tts** - Kokoro TTS on port `10203` (Wyoming proxy only - no model)
-  - Using [Kokoro-FastAPI](http://github.com/projects-land/Kokoro-FastAPI) for serving ROCm compatible Kokoro
+- **kokoro-fastapi-rocm** - Kokoro-FastAPI on port `8880` (ROCm model server, OpenAI-compatible TTS API, and web UI)
+- **wyoming-kokoro-tts** - Kokoro TTS on port `10203` (Wyoming shim that proxies to `kokoro-fastapi-rocm` for Home Assistant)
 
 ## Prerequisites
 
@@ -134,9 +134,16 @@ Available environment variables:
 
 <h3 align="center"> <pre>  Kokoro TTS (Recommended)   </pre> </h3>
 
-This setup is a bit more complex than the others as I'm using the `Kokoro-FastAPI` [project](http://github.com/projects-land/Kokoro-FastAPI) for a ROCm compatible setup to serve the TTS model via it's default OpenAI compatible endpoint (follow their instructions for setting that up). And then this repository just adds an additional proxy layer on top to make that Kokoro model available to Homeassistant via Wyoming.
+Kokoro uses two containers:
 
-- `KOKORO_API_URL` - Kokoro-FastAPI endpoint (default: http://10.0.3.23:8880/v1)
+- `kokoro-fastapi-rocm` runs [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI) with ROCm and serves the actual Kokoro model on port `8880`.
+- `wyoming-kokoro-tts` is a lightweight Wyoming protocol shim on port `10203` so Home Assistant can use the same Kokoro model.
+
+The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-FastAPI's web UI and OpenAI-compatible TTS endpoint, so other tools like OpenWebUI can call `http://your-docker-host:8880/v1/audio/speech` directly. The Wyoming shim talks to the same API internally via `http://kokoro-fastapi-rocm:8880/v1`.
+
+- `KOKORO_API_URL` - Kokoro-FastAPI endpoint used by the Wyoming shim (default: http://kokoro-fastapi-rocm:8880/v1)
+- `KOKORO_FASTAPI_PORT` - Host port for the Kokoro-FastAPI web UI and OpenAI-compatible API (default: 8880)
+- `KOKORO_MIOPEN_FIND_MODE` - MIOpen tuning mode for Kokoro-FastAPI (default: 2; use 3 temporarily for first-run tuning)
 - `KOKORO_VOICE` - Voice selection (see options below)
 - `KOKORO_SPEED` - Speech speed, 0.5-2.0 (default: 1.0)
 - `KOKORO_TIMEOUT` - API request timeout in seconds (default: 30)
@@ -154,7 +161,8 @@ This setup is a bit more complex than the others as I'm using the `Kokoro-FastAP
 
 **Features:**
 - Multi-language support (en, ja, zh, ko, fr, es)
-- No local GPU required - lightweight proxy service
+- Direct OpenAI-compatible TTS API and web UI on `kokoro-fastapi-rocm`
+- Home Assistant integration through the separate `wyoming-kokoro-tts` shim
 - Voice changes require container restart
 
 <h3 align="center"> <pre>   Qwen3-TTS    </pre> </h3>
