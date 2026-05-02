@@ -337,8 +337,8 @@ services:
 
   kokoro-fastapi-rocm:
     build:
-      context: ./kokoro-fastapi
-      dockerfile: Dockerfile
+      context: https://github.com/remsky/Kokoro-FastAPI.git#master
+      dockerfile: docker/rocm/Dockerfile
     container_name: kokoro-fastapi-rocm
     restart: unless-stopped
 
