@@ -34,8 +34,8 @@ def get_model(model_name: str):
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 _LOGGER.info("Using device: %s", device)
 
-                processor = AutoProcessor.from_pretrained(model_name)
-                model = AutoModelForCTC.from_pretrained(model_name).to(device)
+                processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
+                model = AutoModelForCTC.from_pretrained(model_name, trust_remote_code=True).to(device)
                 model.eval()
 
                 _model_cache[model_name] = {
