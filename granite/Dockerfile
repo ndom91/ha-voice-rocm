@@ -2,6 +2,10 @@ FROM rocm/pytorch:rocm7.2.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 WORKDIR /app
 
+# Use Triton backend for flash-attention instead of Composable Kernel
+# CK backend has gfx1151 assembler issues; Triton is slower but works
+ENV FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
+
 # Install build dependencies needed for flash-attn HIP compilation
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -27,8 +31,12 @@ RUN pip install --no-cache-dir \
     accelerate==1.13.0 \
     safetensors==0.7.0
 
-# Note: flash-attn 2.8.3 has gfx1151 assembler issues
-# Using PyTorch's native SDPA instead (set attn_implementation="sdpa" in handler)
+# Build flash-attention with Triton backend (CK backend incompatible with gfx1151)
+RUN pip install --no-cache-dir ninja && \
+    git clone https://github.com/Dao-AILab/flash-attention.git /tmp/flash-attention && \
+    cd /tmp/flash-attention && \
+    FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE python setup.py install && \
+    rm -rf /tmp/flash-attention
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache
