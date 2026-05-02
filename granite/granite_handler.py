@@ -191,12 +191,18 @@ class GraniteEventHandler(AsyncEventHandler):
             # Extract features from audio
             inputs = feature_extractor([audio_data], device=device)
 
+            # Move inputs to model device
+            inputs = {k: v.to(device) if hasattr(v, 'to') else v for k, v in inputs.items()}
+
+            _LOGGER.debug("Running inference on %s", device)
+            
             # Generate transcription using NAR model
             with torch.no_grad():
                 output = model.generate(**inputs)
 
             # Extract text prediction
             text = output.text_preds[0]
+            _LOGGER.debug("Raw transcription: %s", text)
 
             return text.strip()
         except Exception as e:

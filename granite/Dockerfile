@@ -2,14 +2,19 @@ FROM rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 WORKDIR /app
 
-# Install build dependencies needed for flash-attn compilation
+# Install build dependencies needed for flash-attn HIP compilation
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     ninja-build \
+    rocm-dev \
+    hip-runtime-amd \
     libsndfile1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# Install build tools and psutil (needed for flash-attn setup)
+RUN pip install --no-cache-dir setuptools wheel psutil
 
 # Install Python dependencies
 RUN pip install --no-cache-dir \
@@ -22,11 +27,14 @@ RUN pip install --no-cache-dir \
     accelerate==1.13.0 \
     safetensors==0.7.0
 
-# Install flash-attn for HIP/ROCm
-# Don't skip CUDA build, but allow non-CUDA devices
-# The key is to use MAX_JOBS=1 to avoid OOM during build
-RUN MAX_JOBS=1 pip install --no-cache-dir \
-    flash-attn==2.8.3 --no-build-isolation 2>&1 | tail -20
+# Install flash-attn with HIP support for RDNA 3.5 (gfx1151)
+# Set HIP environment variables for proper compilation
+RUN HIP_PATH=/opt/rocm \
+    ROCM_PATH=/opt/rocm \
+    HIP_PLATFORM=amd \
+    MAX_JOBS=1 \
+    pip install --no-cache-dir \
+    flash-attn==2.8.3 --no-build-isolation
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache
