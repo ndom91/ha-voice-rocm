@@ -33,6 +33,16 @@ async def main() -> None:
     _LOGGER.info("Model: %s", args.model)
     _LOGGER.info("URI: %s", args.uri)
 
+    # Eagerly load model at startup to avoid first-request latency
+    _LOGGER.info("Preloading model (this may take a minute)...")
+    from granite_handler import get_model
+    try:
+        get_model(args.model)
+        _LOGGER.info("Model preloaded successfully")
+    except Exception as e:
+        _LOGGER.error("Failed to preload model: %s", e)
+        raise
+
     # Granite speech supports multiple languages
     supported_languages = [
         "en",
