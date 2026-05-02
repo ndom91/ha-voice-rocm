@@ -1,4 +1,4 @@
-FROM rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
+FROM rocm/pytorch:rocm7.2.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 WORKDIR /app
 
@@ -27,14 +27,11 @@ RUN pip install --no-cache-dir \
     accelerate==1.13.0 \
     safetensors==0.7.0
 
-# Install flash-attn with HIP support for RDNA 3.5 (gfx1151)
-# Set HIP environment variables for proper compilation
-RUN HIP_PATH=/opt/rocm \
-    ROCM_PATH=/opt/rocm \
-    HIP_PLATFORM=amd \
-    MAX_JOBS=1 \
-    pip install --no-cache-dir \
-    flash-attn==2.8.3 --no-build-isolation
+# Copy prebuilt flash-attn wheel (built on host with GPU access)
+# To build: HIP_PATH=/opt/rocm ROCM_PATH=/opt/rocm HIP_PLATFORM=amd MAX_JOBS=1 \
+#   pip wheel flash-attn==2.8.3 --no-build-isolation -w /tmp/flash-attn-wheel
+COPY flash_attn*.whl /tmp/flash-attn.whl
+RUN pip install --no-cache-dir /tmp/flash-attn.whl && rm /tmp/flash-attn.whl
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache

@@ -29,7 +29,7 @@ services:
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
       - HIP_VISIBLE_DEVICES=0
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       - CTRANSLATE2_ROOT=/usr/local
@@ -139,7 +139,7 @@ services:
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
       - HIP_VISIBLE_DEVICES=0
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       # Enable experimental ROCm SDPA optimizations for better performance
@@ -201,12 +201,13 @@ services:
     # Group access for GPU
     group_add:
       - video
+      - render
 
     # Environment variables
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
       - HIP_VISIBLE_DEVICES=0
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       # Enable experimental ROCm SDPA optimizations for better performance
@@ -269,7 +270,7 @@ services:
     # Environment variables
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       # Hugging Face cache configuration
@@ -392,7 +393,7 @@ services:
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
       - HIP_VISIBLE_DEVICES=0
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       # ROCm/CUDA environment (ROCm uses CUDA API compatibility)
@@ -525,7 +526,7 @@ services:
     environment:
       - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
       - HIP_VISIBLE_DEVICES=0
-      - ROCM_VERSION=7.1.1
+      - ROCM_VERSION=7.2.1
       - ROCM_PATH=/opt/rocm
       - LD_LIBRARY_PATH=/usr/local/lib:/opt/rocm/lib:/opt/rocm/lib/llvm/lib
       # Enable experimental ROCm SDPA optimizations for better performance

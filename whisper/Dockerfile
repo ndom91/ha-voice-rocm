@@ -1,10 +1,10 @@
-FROM rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
+FROM rocm/pytorch:rocm7.2.1_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 # Set working directory
 WORKDIR /app
 
 # Set environment variables for ROCm
-ENV ROCM_VERSION=7.1.1
+ENV ROCM_VERSION=7.2.1
 ENV HIP_VISIBLE_DEVICES=0
 # GPU architecture override - will be set via docker-compose
 ENV HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
