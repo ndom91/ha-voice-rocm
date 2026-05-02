@@ -39,8 +39,8 @@ from pathlib import Path
 
 path = Path("pyproject.toml")
 text = path.read_text()
-text = text.replace('"torch==2.8.0+rocm6.4"', '"torch==2.13.0.dev20260428+rocm7.2"')
-text = text.replace('"pytorch-triton-rocm>=3.2.0",', '"pytorch-triton-rocm==3.6.0+git8fedd49b",')
+text = text.replace('"torch==2.8.0+rocm6.4"', '"torch"')
+text = text.replace('"pytorch-triton-rocm>=3.2.0",', '"pytorch-triton-rocm>=3.5.0",\n    "triton-rocm",')
 text = text.replace('url = "https://download.pytorch.org/whl/rocm6.4"', 'url = "https://download.pytorch.org/whl/nightly/rocm7.2"')
 path.write_text(text)
 PY
@@ -51,7 +51,7 @@ ENV PHONEMIZER_ESPEAK_PATH=/usr/bin \
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv venv --python 3.12 && \
-    uv sync --extra rocm --prerelease allow
+    uv sync --extra rocm --prerelease allow --resolution lowest-direct
 
 ENV ROCBLAS_VERSION=7.2.0-1
 RUN cd /tmp && wget https://archive.archlinux.org/packages/r/rocblas/rocblas-${ROCBLAS_VERSION}-x86_64.pkg.tar.zst -O rocblas.tar.zst \
