@@ -12,10 +12,15 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir \
     wyoming \
     numpy \
-    torch \
-    torchaudio \
-    transformers \
     librosa
+
+# Install torch/torchaudio with ROCm support (already in base image)
+# Install transformers with flash-attention for Granite NAR model
+RUN pip install --no-cache-dir \
+    transformers==4.57.6 \
+    accelerate==1.13.0 \
+    safetensors==0.7.0 \
+    flash-attn==2.8.3
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache

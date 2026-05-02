@@ -28,19 +28,24 @@ def get_model(model_name: str):
         if model_name not in _model_cache:
             _LOGGER.info("Loading Granite Speech model: %s", model_name)
             try:
-                from transformers import AutoModelForCTC, AutoProcessor
+                from transformers import AutoModel, AutoFeatureExtractor
 
-                # Load model and processor
+                # Load model and feature extractor (Granite uses NAR model, not CTC)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 _LOGGER.info("Using device: %s", device)
 
-                processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
-                model = AutoModelForCTC.from_pretrained(model_name, trust_remote_code=True).to(device)
-                model.eval()
+                feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
+                model = AutoModel.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    attn_implementation="flash_attention_2",
+                    device_map=device,
+                    dtype=torch.bfloat16,
+                ).eval()
 
                 _model_cache[model_name] = {
                     "model": model,
-                    "processor": processor,
+                    "feature_extractor": feature_extractor,
                     "device": device,
                 }
                 _LOGGER.info("Granite Speech model loaded successfully")
@@ -160,22 +165,18 @@ class GraniteEventHandler(AsyncEventHandler):
         try:
             model_info = get_model(self.model_name)
             model = model_info["model"]
-            processor = model_info["processor"]
+            feature_extractor = model_info["feature_extractor"]
             device = model_info["device"]
 
-            # Process audio
-            inputs = processor(audio_data, return_tensors="pt", sampling_rate=16000)
+            # Extract features from audio
+            inputs = feature_extractor([audio_data], device=device)
 
-            # Move to same device as model
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-
-            # Transcribe
+            # Generate transcription using NAR model
             with torch.no_grad():
-                logits = model(**inputs).logits
+                output = model.generate(**inputs)
 
-            # Decode
-            predicted_ids = torch.argmax(logits, dim=-1)
-            text = processor.batch_decode(predicted_ids)[0]
+            # Extract text prediction
+            text = output.text_preds[0]
 
             return text.strip()
         except Exception as e:
