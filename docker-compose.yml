@@ -307,11 +307,13 @@ services:
     container_name: wyoming-kokoro-tts-rocm
     restart: unless-stopped
 
-    # No GPU devices - proxies to external API
+    depends_on:
+      kokoro-fastapi-rocm:
+        condition: service_started
 
     # Environment variables
     environment:
-      - KOKORO_API_URL=${KOKORO_API_URL:-http://10.0.3.23:8880/v1}
+      - KOKORO_API_URL=${KOKORO_API_URL:-http://kokoro-fastapi-rocm:8880/v1}
       - KOKORO_VOICE=${KOKORO_VOICE:-af_bella}
       - KOKORO_SPEED=${KOKORO_SPEED:-1.0}
       - KOKORO_TIMEOUT=${KOKORO_TIMEOUT:-30}
@@ -332,6 +334,57 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  kokoro-fastapi-rocm:
+    build:
+      context: ./kokoro-fastapi
+      dockerfile: Dockerfile
+    container_name: kokoro-fastapi-rocm
+    restart: unless-stopped
+
+    # GPU device access - required for ROCm
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+
+    # Security options for GPU access
+    security_opt:
+      - seccomp:unconfined
+
+    # Group access for GPU
+    group_add:
+      - video
+      - render
+
+    # Environment variables
+    environment:
+      - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
+      - HIP_VISIBLE_DEVICES=0
+      - ROCR_VISIBLE_DEVICES=0
+      - GPU_DEVICE_ORDINAL=0
+      - USE_GPU=true
+      - DOWNLOAD_MODEL=true
+      - TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+      - MIOPEN_USER_DB_PATH=/root/.config/miopen
+      - MIOPEN_CUSTOM_CACHE_DIR=/root/.cache/miopen
+      - MIOPEN_FIND_MODE=${KOKORO_MIOPEN_FIND_MODE:-2}
+
+    # OpenAI-compatible Kokoro-FastAPI endpoint for OpenWebUI and other clients
+    ports:
+      - "${KOKORO_FASTAPI_PORT:-8880}:8880"
+
+    # Persist MIOpen tuning/cache data across container recreations
+    volumes:
+      - ./kokoro-fastapi-data/config:/root/.config/miopen
+      - ./kokoro-fastapi-data/cache:/root/.cache/miopen
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8880/v1/models', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
 
   wyoming-moonshine:
     build:
