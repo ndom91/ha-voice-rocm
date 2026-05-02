@@ -36,8 +36,8 @@ def get_model(model_name: str):
 
                 feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
                 
-                # Try flash_attention_2 (required for best performance)
-                # Fall back to eager if flash-attn not installed
+                # Load with flash_attention_2 if available, use eager otherwise
+                # Note: Model designed for flash-attn; eager may have issues
                 try:
                     _LOGGER.info("Loading with flash_attention_2")
                     model = AutoModel.from_pretrained(
@@ -47,15 +47,21 @@ def get_model(model_name: str):
                         device_map=device,
                         dtype=torch.bfloat16,
                     ).eval()
-                except Exception as e:
-                    _LOGGER.warning("flash_attention_2 not available (%s), falling back to eager", str(e)[:100])
-                    model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
-                        attn_implementation="eager",
-                        device_map=device,
-                        dtype=torch.float32,
-                    ).eval()
+                    _LOGGER.info("Successfully loaded with flash_attention_2")
+                except Exception as flash_err:
+                    _LOGGER.warning("flash_attention_2 not available (%s), trying eager attention", str(flash_err)[:80])
+                    try:
+                        model = AutoModel.from_pretrained(
+                            model_name,
+                            trust_remote_code=True,
+                            attn_implementation="eager",
+                            device_map=device,
+                            dtype=torch.float32,
+                        ).eval()
+                        _LOGGER.info("Successfully loaded with eager attention")
+                    except Exception as eager_err:
+                        _LOGGER.error("Both flash_attention_2 and eager failed: %s", str(eager_err)[:200])
+                        raise
 
                 _model_cache[model_name] = {
                     "model": model,
