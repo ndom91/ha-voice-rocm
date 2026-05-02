@@ -36,31 +36,16 @@ def get_model(model_name: str):
 
                 feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
                 
-                # Try eager first (fastest on gfx1151), fallback to flash_attention_2
-                try:
-                    _LOGGER.info("Loading with eager attention")
-                    model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
-                        attn_implementation="eager",
-                        device_map=device,
-                        dtype=torch.bfloat16,
-                    ).eval()
-                    _LOGGER.info("Successfully loaded with eager attention")
-                except Exception as eager_err:
-                    _LOGGER.warning("eager not available (%s), trying flash_attention_2", str(eager_err)[:100])
-                    try:
-                        model = AutoModel.from_pretrained(
-                            model_name,
-                            trust_remote_code=True,
-                            attn_implementation="flash_attention_2",
-                            device_map=device,
-                            dtype=torch.bfloat16,
-                        ).eval()
-                        _LOGGER.info("Loaded with flash_attention_2 (Triton backend)")
-                    except Exception as flash_err:
-                        _LOGGER.error("Both eager and flash_attention_2 failed: %s", str(flash_err)[:200])
-                        raise
+                # Model requires flash_attention_2 (asserted at inference time)
+                _LOGGER.info("Loading with flash_attention_2 (required by model)")
+                model = AutoModel.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    attn_implementation="flash_attention_2",
+                    device_map=device,
+                    dtype=torch.bfloat16,
+                ).eval()
+                _LOGGER.info("Successfully loaded with flash_attention_2 (Triton backend on gfx1151)")
 
                 _model_cache[model_name] = {
                     "model": model,
