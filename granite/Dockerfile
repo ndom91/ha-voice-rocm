@@ -14,15 +14,10 @@ RUN pip install --no-cache-dir \
     numpy \
     librosa \
     torch \
-    torchaudio
-
-# Install transformers with flash-attention for Granite NAR model
-# flash-attn requires torch to be installed first
-RUN pip install --no-cache-dir \
+    torchaudio \
     transformers==4.57.6 \
     accelerate==1.13.0 \
-    safetensors==0.7.0 \
-    flash-attn==2.8.3 --no-build-isolation
+    safetensors==0.7.0
 
 # Create data directory for model cache
 RUN mkdir -p /data/models /data/hf_cache

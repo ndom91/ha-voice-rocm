@@ -35,13 +35,26 @@ def get_model(model_name: str):
                 _LOGGER.info("Using device: %s", device)
 
                 feature_extractor = AutoFeatureExtractor.from_pretrained(model_name, trust_remote_code=True)
-                model = AutoModel.from_pretrained(
-                    model_name,
-                    trust_remote_code=True,
-                    attn_implementation="flash_attention_2",
-                    device_map=device,
-                    dtype=torch.bfloat16,
-                ).eval()
+                
+                # Try flash_attention_2, fall back to eager if unavailable
+                attn_impl = "flash_attention_2"
+                try:
+                    model = AutoModel.from_pretrained(
+                        model_name,
+                        trust_remote_code=True,
+                        attn_implementation=attn_impl,
+                        device_map=device,
+                        dtype=torch.bfloat16,
+                    ).eval()
+                except Exception as e:
+                    _LOGGER.warning("Could not use flash_attention_2, falling back to eager: %s", e)
+                    model = AutoModel.from_pretrained(
+                        model_name,
+                        trust_remote_code=True,
+                        attn_implementation="eager",
+                        device_map=device,
+                        dtype=torch.bfloat16,
+                    ).eval()
 
                 _model_cache[model_name] = {
                     "model": model,
