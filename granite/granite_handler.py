@@ -189,7 +189,9 @@ class GraniteEventHandler(AsyncEventHandler):
             device = model_info["device"]
 
             # Extract features from audio
-            inputs = feature_extractor([audio_data], device=device)
+            # Convert numpy array to torch tensor
+            audio_tensor = torch.from_numpy(audio_data).float()
+            inputs = feature_extractor([audio_tensor], device=device)
 
             # Move inputs to model device
             inputs = {k: v.to(device) if hasattr(v, 'to') else v for k, v in inputs.items()}
