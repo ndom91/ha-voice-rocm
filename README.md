@@ -2,7 +2,7 @@
 
 Docker setup for experimenting with various TTS and STT models. Each container is setup to run their respective models with a small Python shim on top exposing them via the Wyoming protocol so Homeassistant can talk to them.
 
-This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specifically the `gfx1151` (Strix Halo) series, but it can easily be modified to run on any other modern AMD hardware.
+This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (Strix Halo) series, but it can easily be modified to run on most other modern AMD GPUs.
 
 > **Currently daily driving: Parakeet v3 for STT and Kokoro for TTS**
 
@@ -11,9 +11,9 @@ This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specificall
 
 ## Features
 
-- **Multiple STT engines** - Whisper, Moonshine, Parakeet, and Voxtral
+- **Multiple STT engines** - Whisper, Moonshine, Parakeet, Granite, and Voxtral
 - **Multiple TTS engines** - Qwen3, Chatterbox Turbo, Pocket, and Kokoro
-- **ROCm 7.1.1** GPU acceleration for AMD GPUs (where applicable)
+- **ROCm** GPU acceleration for AMD GPUs (where applicable)
 - **Wyoming Protocol** for easy Home Assistant integration
 
 ## Services
@@ -22,6 +22,7 @@ This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specificall
 - **wyoming-whisper** - Speech-to-Text on port `10300` (CTranslate2 + Whisper)
 - **wyoming-moonshine** - Real-time STT on port `10302` (Moonshine ONNX, CPU-only, ultra-low latency)
 - **wyoming-parakeet** - STT on port `10303` (NVIDIA NeMo parakeet-tdt-0.6b-v3, GPU-accelerated)
+- **wyoming-granite** - STT on port `10304` (IBM granite-speech-4.1-2b-nar, GPU-accelerated)
 - **wyoming-voxtral** (Not working yet) - Real-time STT on port `10301` (vLLM + Mistral Voxtral, <500ms latency)
 
 ### Text-to-Speech (TTS)
