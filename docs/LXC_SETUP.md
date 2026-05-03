@@ -4,15 +4,21 @@
 
 You're running this in Ubuntu 24.04 LXC on Proxmox with ROCm 7.1.1 target.
 
+1. Proxmox Node
+2. Ubuntu 24.04 LXC from [Proxmox community-scripts](https://community-scripts.org/scripts/ubuntu)
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/ubuntu.sh)"
+```
+
 ## 1. LXC Container GPU Passthrough
 
 Add to your LXC container config (`/etc/pve/lxc/<VMID>.conf`):
 
 ```ini
+dev2: /dev/kfd,gid=44
 lxc.cgroup2.devices.allow: c 226:* rwm
 lxc.cgroup2.devices.allow: c 242:* rwm
-lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
-lxc.mount.entry: /dev/kfd dev/kfd none bind,optional,create=dir
 ```
 
 Then restart the container.
@@ -39,21 +45,7 @@ Verify:
 rocminfo
 ```
 
-## 4. Build flash-attn Wheel (on Proxmox Host)
-
-```bash
-# On Proxmox host (not in LXC)
-cd /path/to/granite
-
-HIP_PATH=/opt/rocm ROCM_PATH=/opt/rocm HIP_PLATFORM=amd MAX_JOBS=1 \
-  python3 -m pip wheel flash-attn==2.8.3 --no-build-isolation -w ./
-
-# Copy wheel into LXC or mount directory
-```
-
-See [`granite/BUILD_WHEEL.md`](./granite/BUILD_WHEEL.md).
-
-## 5. Set GPU Architecture
+## 4. Set GPU Architecture
 
 In `.env`:
 
@@ -67,12 +59,9 @@ Verify gfx version:
 rocminfo | grep gfx
 ```
 
-## 6. Build & Run Services
+## 5. Build & Run Services
 
 ```bash
-# Build granite (requires flash-attn wheel)
-docker compose build wyoming-granite
-
 # Run
 docker compose up -d wyoming-granite
 
@@ -89,7 +78,6 @@ rocminfo  # Should show GPU in use
 - Run `rocminfo` in container
 
 **flash-attn build fails:**
-- Build wheel on **host**, not in LXC
 - Use `MAX_JOBS=1` to avoid memory issues
 - Check `/opt/rocm` path exists
 
