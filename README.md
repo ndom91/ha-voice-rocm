@@ -6,6 +6,9 @@ This setup specifically is designed to run on AMD GPUs (ROCm 7.1.1). Specificall
 
 > **Currently daily driving: Parakeet v3 for STT and Kokoro for TTS**
 
+> [!NOTE]
+> Great primer on everything voice AI: https://github.com/mahimairaja/voiceai
+
 ## Features
 
 - **Multiple STT engines** - Whisper, Moonshine, Parakeet, and Voxtral
