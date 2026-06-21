@@ -11,7 +11,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 
 ## Features
 
-- **Multiple STT engines** - Whisper, Moonshine, Parakeet, Granite, and Voxtral
+- **Multiple STT engines** - Whisper, Moonshine, Parakeet, Granite, Gemma, and Voxtral
 - **Multiple TTS engines** - Qwen3, Chatterbox Turbo, Pocket, and Kokoro
 - **ROCm** GPU acceleration for AMD GPUs (where applicable)
 - **Wyoming Protocol** for easy Home Assistant integration
@@ -23,6 +23,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 - **wyoming-moonshine** - Real-time STT on port `10302` (Moonshine ONNX, CPU-only, ultra-low latency)
 - **wyoming-parakeet** - STT on port `10303` (NVIDIA NeMo parakeet-tdt-0.6b-v3, GPU-accelerated)
 - **wyoming-granite** - STT on port `10304` (IBM granite-speech-4.1-2b-nar, GPU-accelerated)
+- **wyoming-gemma-asr** - STT on port `10305` (lightweight Wyoming shim for external llama.cpp Gemma audio server)
 - **wyoming-voxtral** (Not working yet) - Real-time STT on port `10301` (vLLM + Mistral Voxtral, <500ms latency)
 
 ### Text-to-Speech (TTS)
@@ -86,6 +87,20 @@ Available environment variables:
 - NVIDIA NeMo TDT (Token-and-Duration Transducer) architecture
 - GPU-accelerated via ROCm/PyTorch
 - 0.6B parameter model, good accuracy with moderate VRAM usage
+
+<h3 align="center"> <pre>  Gemma Audio  </pre> </h3>
+
+Gemma uses a lightweight Wyoming shim that sends captured WAV audio to an existing llama.cpp/OpenAI-compatible server via `/v1/audio/transcriptions`.
+
+Available environment variables:
+- `GEMMA_API_URL` - OpenAI-compatible llama.cpp base URL (default: https://llama-dash.puff.lan/v1)
+- `GEMMA_API_KEY` - Optional bearer token for the llama.cpp proxy
+- `GEMMA_MODEL` - Model ID exposed by `/v1/models` (default: gemma-4-12B-fast)
+- `GEMMA_PROMPT` - Transcription instruction prompt
+- `GEMMA_TIMEOUT` - API timeout in seconds (default: 120)
+- `GEMMA_TEMPERATURE` - Sampling temperature (default: 0)
+- `GEMMA_VERIFY_SSL` - true/false TLS verification (default: false for self-signed LAN certs)
+- `GEMMA_DEBUG` - true/false
 
 <h3 align="center"> <pre>  Whisper  </pre> </h3>
 
@@ -202,6 +217,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
    - **Whisper**: Host = `your-docker-host`, Port = `10300`
    - **Moonshine**: Host = `your-docker-host`, Port = `10302`
    - **Parakeet**: Host = `your-docker-host`, Port = `10303`
+   - **Gemma Audio**: Host = `your-docker-host`, Port = `10305`
    - **Voxtral**: Host = `your-docker-host`, Port = `10301`
    - **Qwen3-TTS**: Host = `your-docker-host`, Port = `10200`
    - **Chatterbox Turbo**: Host = `your-docker-host`, Port = `10201`
@@ -217,6 +233,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
 - [Moonshine](https://github.com/moonshine-ai/moonshine)
 - [NVIDIA Parakeet TDT](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
 - [Mistral Voxtral](https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602)
+- [Unsloth Gemma 4 12B QAT GGUF](https://huggingface.co/unsloth/gemma-4-12B-it-qat-GGUF)
 - [vLLM](https://docs.vllm.ai/)
 
 ### TTS Engines
