@@ -432,8 +432,9 @@ services:
       - GEMMA_API_KEY=${GEMMA_API_KEY:-}
       - GEMMA_MODEL=${GEMMA_MODEL:-gemma-4-12B-fast}
       - GEMMA_PROMPT=${GEMMA_PROMPT:-Transcribe the spoken audio exactly. Return only the transcript text. If there is no intelligible speech, return an empty transcript.}
-      - GEMMA_TIMEOUT=${GEMMA_TIMEOUT:-120}
+      - GEMMA_TIMEOUT=${GEMMA_TIMEOUT:-600}
       - GEMMA_TEMPERATURE=${GEMMA_TEMPERATURE:-0}
+      - GEMMA_MAX_TOKENS=${GEMMA_MAX_TOKENS:-128}
       - GEMMA_VERIFY_SSL=${GEMMA_VERIFY_SSL:-false}
       - GEMMA_DEBUG=${GEMMA_DEBUG:-false}
 

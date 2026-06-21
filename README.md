@@ -97,8 +97,9 @@ Available environment variables:
 - `GEMMA_API_KEY` - Optional bearer token for the llama.cpp proxy
 - `GEMMA_MODEL` - Model ID exposed by `/v1/models` (default: gemma-4-12B-fast)
 - `GEMMA_PROMPT` - Transcription instruction prompt
-- `GEMMA_TIMEOUT` - API timeout in seconds (default: 120)
+- `GEMMA_TIMEOUT` - API timeout in seconds (default: 600)
 - `GEMMA_TEMPERATURE` - Sampling temperature (default: 0)
+- `GEMMA_MAX_TOKENS` - Maximum transcript tokens (default: 128)
 - `GEMMA_VERIFY_SSL` - true/false TLS verification (default: false for self-signed LAN certs)
 - `GEMMA_DEBUG` - true/false
 

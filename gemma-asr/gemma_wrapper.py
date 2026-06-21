@@ -47,7 +47,7 @@ async def main() -> None:
     parser.add_argument(
         "--api-timeout",
         type=float,
-        default=120.0,
+        default=600.0,
         help="API request timeout in seconds",
     )
     parser.add_argument(
@@ -55,6 +55,12 @@ async def main() -> None:
         type=float,
         default=0.0,
         help="Sampling temperature for transcription requests",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=128,
+        help="Maximum transcript tokens to generate",
     )
     parser.add_argument(
         "--no-verify-ssl",
@@ -110,6 +116,7 @@ async def main() -> None:
         api_key=args.api_key,
         api_timeout=args.api_timeout,
         temperature=args.temperature,
+        max_tokens=args.max_tokens,
         verify_ssl=not args.no_verify_ssl,
     )
 

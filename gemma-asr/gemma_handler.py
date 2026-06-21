@@ -108,6 +108,7 @@ class GemmaTranscriber:
         api_key: str | None,
         api_timeout: float,
         temperature: float,
+        max_tokens: int,
         verify_ssl: bool,
     ) -> None:
         self.api_url = api_url.rstrip("/")
@@ -116,6 +117,7 @@ class GemmaTranscriber:
         self.api_key = api_key
         self.api_timeout = api_timeout
         self.temperature = temperature
+        self.max_tokens = max_tokens
         self.verify_ssl = verify_ssl
 
     async def transcribe_pcm_bytes(
@@ -147,24 +149,45 @@ class GemmaTranscriber:
             "prompt": self.prompt,
             "response_format": "json",
             "temperature": str(self.temperature),
+            "max_tokens": str(self.max_tokens),
         }
         files = {
             "file": ("audio.wav", wav_bytes, "audio/wav"),
         }
 
         _LOGGER.debug("Calling Gemma API: %s", endpoint)
+        timeout = httpx.Timeout(
+            connect=10.0,
+            read=self.api_timeout,
+            write=60.0,
+            pool=10.0,
+        )
         async with httpx.AsyncClient(
-            timeout=self.api_timeout,
+            timeout=timeout,
             verify=self.verify_ssl,
         ) as client:
-            response = await client.post(
-                endpoint,
-                data=form_data,
-                files=files,
-                headers=headers,
-            )
-            response.raise_for_status()
-            data = response.json()
+            try:
+                response = await client.post(
+                    endpoint,
+                    data=form_data,
+                    files=files,
+                    headers=headers,
+                )
+                response.raise_for_status()
+                data = response.json()
+            except httpx.TimeoutException as err:
+                _LOGGER.error(
+                    "Gemma API timed out after %.0fs waiting for transcription",
+                    self.api_timeout,
+                )
+                raise err
+            except httpx.HTTPStatusError as err:
+                _LOGGER.error(
+                    "Gemma API returned HTTP %d: %s",
+                    err.response.status_code,
+                    err.response.text[:1000],
+                )
+                raise err
 
         return self._clean_text(self._extract_text(data))
 
