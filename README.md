@@ -28,6 +28,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 
 ### Text-to-Speech (TTS)
 - **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice design and CustomVoice models, including 1.7B CustomVoice)
+- **wyoming-qwen-customvoice** - Qwen3-TTS 12Hz 1.7B CustomVoice on port `10204` (GPU-accelerated, dedicated preset-voice service)
 - **wyoming-chatterbox-turbo** - Chatterbox Turbo on port `10201` (GPU-accelerated, sub-200ms latency)
 - **wyoming-pocket-tts** - Pocket TTS on port `10202` (CPU-only, ultra-low latency)
 - **kokoro-fastapi-rocm** - Kokoro-FastAPI on port `8880` (ROCm model server, OpenAI-compatible TTS API, and web UI)
@@ -200,6 +201,18 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 - `QWEN_FLASH_ATTENTION` - true/false
 - `QWEN_DEBUG` - true/false
 
+<h3 align="center"> <pre>   Qwen3-TTS 1.7B CustomVoice   </pre> </h3>
+
+`wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`.
+
+- `QWEN_CUSTOMVOICE_SPEAKER` - Preset speaker: `Ryan`, `Aiden`, `Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ono_Anna`, or `Sohee` (default: `Ryan`)
+- `QWEN_CUSTOMVOICE_INSTRUCT` - Optional emotion or delivery modifier
+- `QWEN_CUSTOMVOICE_LANGUAGE` - Language selection (default: `Auto`)
+- `QWEN_CUSTOMVOICE_DEVICE` - `cuda:0` (ROCm GPU) or `cpu`
+- `QWEN_CUSTOMVOICE_DTYPE` - `bfloat16` (default), `float16`, or `float32`
+- `QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: `1024`)
+- `QWEN_CUSTOMVOICE_DEBUG` - true/false
+
 <h3 align="center"> <pre>   Chatterbox Turbo   </pre> </h3>
 
 - `CHATTERBOX_DEVICE` - cuda:0 (GPU) or cpu
@@ -225,7 +238,8 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
    - **Parakeet**: Host = `your-docker-host`, Port = `10303`
    - **Gemma Audio**: Host = `your-docker-host`, Port = `10305`
    - **Voxtral**: Host = `your-docker-host`, Port = `10301`
-   - **Qwen3-TTS**: Host = `your-docker-host`, Port = `10200`
+    - **Qwen3-TTS**: Host = `your-docker-host`, Port = `10200`
+    - **Qwen3-TTS 1.7B CustomVoice**: Host = `your-docker-host`, Port = `10204`
    - **Chatterbox Turbo**: Host = `your-docker-host`, Port = `10201`
    - **Pocket TTS**: Host = `your-docker-host`, Port = `10202`
    - **Kokoro TTS**: Host = `your-docker-host`, Port = `10203`
