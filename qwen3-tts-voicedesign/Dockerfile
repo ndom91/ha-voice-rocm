@@ -38,7 +38,7 @@ WORKDIR /app
 # Share the protocol implementation with the configurable Qwen3-TTS service.
 COPY qwen3-tts/qwen_wrapper.py /app/
 COPY qwen3-tts/qwen_handler.py /app/
-COPY qwen3-tts-customvoice/entrypoint.sh /app/
+COPY qwen3-tts-voicedesign/entrypoint.sh /app/
 
 RUN chmod +x /app/entrypoint.sh
 

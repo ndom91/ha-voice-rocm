@@ -100,12 +100,21 @@ async def _handle_speech(request, *, model_name, speaker, instruct, language, de
 
     try:
         model = get_model(model_name, device, dtype, False, cache_dir)
-        wavs, sample_rate = model.generate_custom_voice(
-            text=text,
-            language=payload.get("language", language),
-            speaker=payload.get("voice") or speaker,
-            instruct=payload.get("instructions", instruct),
-        )
+        if "CustomVoice" in model_name:
+            wavs, sample_rate = model.generate_custom_voice(
+                text=text,
+                language=payload.get("language", language),
+                speaker=payload.get("voice") or speaker,
+                instruct=payload.get("instructions", instruct),
+            )
+        elif "VoiceDesign" in model_name:
+            wavs, sample_rate = model.generate_voice_design(
+                text=text,
+                language=payload.get("language", language),
+                instruct=payload.get("instructions", instruct),
+            )
+        else:
+            raise ValueError(f"OpenAI API does not support model: {model_name}")
         audio_data, content_type = _encode_audio(
             _to_pcm(wavs), sample_rate, response_format
         )

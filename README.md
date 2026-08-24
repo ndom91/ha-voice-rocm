@@ -28,7 +28,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 
 ### Text-to-Speech (TTS)
 - **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice design and CustomVoice models, including 1.7B CustomVoice)
-- **wyoming-qwen-customvoice** - Qwen3-TTS 12Hz 1.7B CustomVoice on port `10204` (GPU-accelerated, dedicated preset-voice service)
+- **wyoming-qwen-customvoice** - Qwen3-TTS 12Hz 1.7B VoiceDesign on port `10204` (GPU-accelerated, dedicated voice-design service)
 - **wyoming-chatterbox-turbo** - Chatterbox Turbo on port `10201` (GPU-accelerated, sub-200ms latency)
 - **wyoming-pocket-tts** - Pocket TTS on port `10202` (CPU-only, ultra-low latency)
 - **kokoro-fastapi-rocm** - Kokoro-FastAPI on port `8880` (ROCm model server, OpenAI-compatible TTS API, and web UI)
@@ -201,22 +201,21 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 - `QWEN_FLASH_ATTENTION` - true/false
 - `QWEN_DEBUG` - true/false
 
-<h3 align="center"> <pre>   Qwen3-TTS 1.7B CustomVoice   </pre> </h3>
+<h3 align="center"> <pre>   Qwen3-TTS 1.7B VoiceDesign   </pre> </h3>
 
-`wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`. It also exposes OpenAI-compatible synthesis at `http://your-docker-host:10214/v1/audio/speech`.
+`wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`. It also exposes OpenAI-compatible synthesis at `http://your-docker-host:10214/v1/audio/speech`.
 
 The service uses MIOpen FAST mode and persists its MIOpen cache in `qwen-customvoice-data/miopen`. This avoids repeated ROCm convolution-solver searches that otherwise add substantial latency to Qwen TTS on RDNA GPUs.
 
-- `QWEN_CUSTOMVOICE_SPEAKER` - Preset speaker: `Ryan`, `Aiden`, `Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ono_Anna`, or `Sohee` (default: `Ryan`)
-- `QWEN_CUSTOMVOICE_INSTRUCT` - Optional emotion or delivery modifier
-- `QWEN_CUSTOMVOICE_LANGUAGE` - Language selection (default: `Auto`)
-- `QWEN_CUSTOMVOICE_DEVICE` - `cuda:0` (ROCm GPU) or `cpu`
-- `QWEN_CUSTOMVOICE_DTYPE` - `bfloat16` (default), `float16`, or `float32`
-- `QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: `1024`)
-- `QWEN_CUSTOMVOICE_DEBUG` - true/false
-- `QWEN_CUSTOMVOICE_OPENAI_PORT` - Host port for the OpenAI-compatible endpoint (default: `10214`)
+- `QWEN_VOICEDESIGN_INSTRUCT` - Voice description used for all requests without API `instructions`
+- `QWEN_VOICEDESIGN_LANGUAGE` - Language selection (default: `Auto`)
+- `QWEN_VOICEDESIGN_DEVICE` - `cuda:0` (ROCm GPU) or `cpu`
+- `QWEN_VOICEDESIGN_DTYPE` - `bfloat16` (default), `float16`, or `float32`
+- `QWEN_VOICEDESIGN_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: `1024`)
+- `QWEN_VOICEDESIGN_DEBUG` - true/false
+- `QWEN_VOICEDESIGN_OPENAI_PORT` - Host port for the OpenAI-compatible endpoint (default: `10214`)
 
-The OpenAI endpoint accepts `POST /v1/audio/speech` with `model`, `input`, optional `voice`, optional `instructions`, and optional `response_format` (`mp3`, `opus`, `aac`, `flac`, `wav`, or `pcm`). `voice` selects one of the CustomVoice speakers and defaults to `QWEN_CUSTOMVOICE_SPEAKER`.
+The OpenAI endpoint accepts `POST /v1/audio/speech` with `model`, `input`, optional `instructions`, and optional `response_format` (`mp3`, `opus`, `aac`, `flac`, `wav`, or `pcm`). `instructions` overrides `QWEN_VOICEDESIGN_INSTRUCT` for that request.
 
 <h3 align="center"> <pre>   Chatterbox Turbo   </pre> </h3>
 
@@ -244,7 +243,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
    - **Gemma Audio**: Host = `your-docker-host`, Port = `10305`
    - **Voxtral**: Host = `your-docker-host`, Port = `10301`
     - **Qwen3-TTS**: Host = `your-docker-host`, Port = `10200`
-    - **Qwen3-TTS 1.7B CustomVoice**: Host = `your-docker-host`, Port = `10204`
+    - **Qwen3-TTS 1.7B VoiceDesign**: Host = `your-docker-host`, Port = `10204`
    - **Chatterbox Turbo**: Host = `your-docker-host`, Port = `10201`
    - **Pocket TTS**: Host = `your-docker-host`, Port = `10202`
    - **Kokoro TTS**: Host = `your-docker-host`, Port = `10203`
@@ -262,7 +261,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
 - [vLLM](https://docs.vllm.ai/)
 
 ### TTS Engines
-- [Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice)
+- [Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign)
 - [Chatterbox Turbo](https://huggingface.co/MycroftAI/Chatterbox-Turbo)
 - [Pocket TTS](https://github.com/kyutai-labs/pocket-tts)
 - [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)

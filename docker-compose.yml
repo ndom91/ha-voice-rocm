@@ -184,7 +184,7 @@ services:
     build:
       # The dedicated service reuses the shared Qwen Wyoming implementation.
       context: .
-      dockerfile: qwen3-tts-customvoice/Dockerfile
+      dockerfile: qwen3-tts-voicedesign/Dockerfile
       args:
         HSA_OVERRIDE_GFX_VERSION: ${HSA_OVERRIDE_GFX_VERSION:-11.5.1}
     container_name: wyoming-qwen-customvoice-rocm
@@ -215,19 +215,18 @@ services:
       - HF_HOME=/data/hf_cache
       - TRANSFORMERS_CACHE=/data/hf_cache
       - HUGGINGFACE_HUB_CACHE=/data/hf_cache/hub
-      - QWEN_CUSTOMVOICE_SPEAKER=${QWEN_CUSTOMVOICE_SPEAKER:-Ryan}
-      - QWEN_CUSTOMVOICE_INSTRUCT=${QWEN_CUSTOMVOICE_INSTRUCT:-}
-      - QWEN_CUSTOMVOICE_LANGUAGE=${QWEN_CUSTOMVOICE_LANGUAGE:-Auto}
-      - QWEN_CUSTOMVOICE_DEVICE=${QWEN_CUSTOMVOICE_DEVICE:-cuda:0}
-      - QWEN_CUSTOMVOICE_DTYPE=${QWEN_CUSTOMVOICE_DTYPE:-bfloat16}
-      - QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK=${QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK:-1024}
-      - QWEN_CUSTOMVOICE_CACHE_DIR=/data/models
-      - QWEN_CUSTOMVOICE_DEBUG=${QWEN_CUSTOMVOICE_DEBUG:-false}
+      - QWEN_VOICEDESIGN_INSTRUCT=${QWEN_VOICEDESIGN_INSTRUCT:-Clear, natural voice with medium pitch}
+      - QWEN_VOICEDESIGN_LANGUAGE=${QWEN_VOICEDESIGN_LANGUAGE:-Auto}
+      - QWEN_VOICEDESIGN_DEVICE=${QWEN_VOICEDESIGN_DEVICE:-cuda:0}
+      - QWEN_VOICEDESIGN_DTYPE=${QWEN_VOICEDESIGN_DTYPE:-bfloat16}
+      - QWEN_VOICEDESIGN_SAMPLES_PER_CHUNK=${QWEN_VOICEDESIGN_SAMPLES_PER_CHUNK:-1024}
+      - QWEN_VOICEDESIGN_CACHE_DIR=/data/models
+      - QWEN_VOICEDESIGN_DEBUG=${QWEN_VOICEDESIGN_DEBUG:-false}
 
     # Container port 10200 is exposed as 10204 to avoid the configurable Qwen service.
     ports:
       - "10204:10200"
-      - "${QWEN_CUSTOMVOICE_OPENAI_PORT:-10214}:10201"
+      - "${QWEN_VOICEDESIGN_OPENAI_PORT:-10214}:10201"
 
     volumes:
       - ./qwen-customvoice-data:/data
