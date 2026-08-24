@@ -29,6 +29,7 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir git+https://github.com/QwenLM/Qwen3-TTS.git
 
 RUN pip3 install --no-cache-dir \
+    aiohttp \
     wyoming \
     onnxruntime-rocm
 
@@ -42,5 +43,6 @@ COPY qwen3-tts-customvoice/entrypoint.sh /app/
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 10200
+EXPOSE 10201
 
 ENTRYPOINT ["/app/entrypoint.sh"]

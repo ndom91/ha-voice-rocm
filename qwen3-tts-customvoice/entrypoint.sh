@@ -16,6 +16,7 @@ echo "Language: $QWEN_CUSTOMVOICE_LANGUAGE"
 
 CMD_ARGS=(
     "--uri" "tcp://0.0.0.0:10200"
+    "--openai-uri" "http://0.0.0.0:10201"
     "--model" "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
     "--instruct" "$QWEN_CUSTOMVOICE_INSTRUCT"
     "--speaker" "$QWEN_CUSTOMVOICE_SPEAKER"

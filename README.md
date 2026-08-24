@@ -203,7 +203,7 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 
 <h3 align="center"> <pre>   Qwen3-TTS 1.7B CustomVoice   </pre> </h3>
 
-`wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`.
+`wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`. It also exposes OpenAI-compatible synthesis at `http://your-docker-host:10214/v1/audio/speech`.
 
 - `QWEN_CUSTOMVOICE_SPEAKER` - Preset speaker: `Ryan`, `Aiden`, `Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ono_Anna`, or `Sohee` (default: `Ryan`)
 - `QWEN_CUSTOMVOICE_INSTRUCT` - Optional emotion or delivery modifier
@@ -212,6 +212,9 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 - `QWEN_CUSTOMVOICE_DTYPE` - `bfloat16` (default), `float16`, or `float32`
 - `QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK` - Audio streaming chunk size (default: `1024`)
 - `QWEN_CUSTOMVOICE_DEBUG` - true/false
+- `QWEN_CUSTOMVOICE_OPENAI_PORT` - Host port for the OpenAI-compatible endpoint (default: `10214`)
+
+The OpenAI endpoint accepts `POST /v1/audio/speech` with `model`, `input`, optional `voice`, optional `instructions`, and optional `response_format` (`mp3`, `opus`, `aac`, `flac`, `wav`, or `pcm`). `voice` selects one of the CustomVoice speakers and defaults to `QWEN_CUSTOMVOICE_SPEAKER`.
 
 <h3 align="center"> <pre>   Chatterbox Turbo   </pre> </h3>
 

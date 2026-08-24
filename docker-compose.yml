@@ -226,6 +226,7 @@ services:
     # Container port 10200 is exposed as 10204 to avoid the configurable Qwen service.
     ports:
       - "10204:10200"
+      - "${QWEN_CUSTOMVOICE_OPENAI_PORT:-10214}:10201"
 
     volumes:
       - ./qwen-customvoice-data:/data
