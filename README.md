@@ -27,7 +27,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 - **wyoming-voxtral** (Not working yet) - Real-time STT on port `10301` (vLLM + Mistral Voxtral, <500ms latency)
 
 ### Text-to-Speech (TTS)
-- **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice instructions)
+- **wyoming-qwen-tts** - Qwen3 TTS on port `10200` (GPU-accelerated, voice design and CustomVoice models, including 1.7B CustomVoice)
 - **wyoming-chatterbox-turbo** - Chatterbox Turbo on port `10201` (GPU-accelerated, sub-200ms latency)
 - **wyoming-pocket-tts** - Pocket TTS on port `10202` (CPU-only, ultra-low latency)
 - **kokoro-fastapi-rocm** - Kokoro-FastAPI on port `8880` (ROCm model server, OpenAI-compatible TTS API, and web UI)
@@ -187,8 +187,13 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 
 <h3 align="center"> <pre>   Qwen3-TTS    </pre> </h3>
 
-- `QWEN_MODEL` - Model choice (default: Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign)
-- `QWEN_VOICE_INSTRUCT` - Text description of desired voice
+- `QWEN_MODEL` - Model choice. Supported options:
+  - `Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign` - Text-described voices
+  - `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice` - Higher-quality preset voices and emotion control
+  - `Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice` - Faster preset voices and emotion control (default)
+  - `Qwen/Qwen3-TTS-12Hz-0.6B-Base` - Reference-audio voice cloning
+- `QWEN_VOICE_INSTRUCT` - Voice description for VoiceDesign, or an optional emotion modifier for CustomVoice
+- `QWEN_SPEAKER` - Preset speaker for CustomVoice: `Ryan`, `Aiden`, `Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ono_Anna`, or `Sohee` (default: `Ryan`)
 - `QWEN_LANGUAGE` - Language selection (Auto, Chinese, English, Japanese, etc.)
 - `QWEN_DEVICE` - cuda:0 (GPU) or cpu
 - `QWEN_DTYPE` - bfloat16 (default), float16, float32, int8, int4
@@ -238,7 +243,7 @@ CPU-only, ultra-low latency (~200ms to first audio chunk).
 - [vLLM](https://docs.vllm.ai/)
 
 ### TTS Engines
-- [Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign)
+- [Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice)
 - [Chatterbox Turbo](https://huggingface.co/MycroftAI/Chatterbox-Turbo)
 - [Pocket TTS](https://github.com/kyutai-labs/pocket-tts)
 - [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)
