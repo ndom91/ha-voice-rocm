@@ -10,6 +10,9 @@ QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK="${QWEN_CUSTOMVOICE_SAMPLES_PER_CHUNK:-1024}"
 QWEN_CUSTOMVOICE_CACHE_DIR="${QWEN_CUSTOMVOICE_CACHE_DIR:-/data/models}"
 QWEN_CUSTOMVOICE_DEBUG="${QWEN_CUSTOMVOICE_DEBUG:-false}"
 
+# Persist MIOpen's selected kernels across container recreations.
+mkdir -p "$MIOPEN_USER_DB_PATH" "$MIOPEN_CUSTOM_CACHE_DIR"
+
 echo "Starting Wyoming Qwen3-TTS 1.7B CustomVoice server"
 echo "Speaker: $QWEN_CUSTOMVOICE_SPEAKER"
 echo "Language: $QWEN_CUSTOMVOICE_LANGUAGE"

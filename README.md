@@ -205,6 +205,8 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 
 `wyoming-qwen-customvoice` is a dedicated service for `Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`. It runs independently from `wyoming-qwen-tts`, uses port `10204`, and persists its weights in `qwen-customvoice-data`. It also exposes OpenAI-compatible synthesis at `http://your-docker-host:10214/v1/audio/speech`.
 
+The service uses MIOpen FAST mode and persists its MIOpen cache in `qwen-customvoice-data/miopen`. This avoids repeated ROCm convolution-solver searches that otherwise add substantial latency to Qwen TTS on RDNA GPUs.
+
 - `QWEN_CUSTOMVOICE_SPEAKER` - Preset speaker: `Ryan`, `Aiden`, `Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ono_Anna`, or `Sohee` (default: `Ryan`)
 - `QWEN_CUSTOMVOICE_INSTRUCT` - Optional emotion or delivery modifier
 - `QWEN_CUSTOMVOICE_LANGUAGE` - Language selection (default: `Auto`)
