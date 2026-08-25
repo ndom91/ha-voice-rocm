@@ -173,7 +173,7 @@ The FastAPI container is useful outside Home Assistant too. It exposes Kokoro-Fa
 **Voice Options:**
 - Female American: `af_bella`, `af_sarah`, `af_sky`
 - Male American: `am_adam`, `am_michael`
-- Female British: `bf_emma`, `bf_isabella`
+- Female British: `bf_alice`, `bf_emma`, `bf_lily`, `bf_v0isabella`
 - Male British: `bm_george`, `bm_lewis`
 
 **Voice Mixing:**
