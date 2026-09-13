@@ -22,6 +22,7 @@ This setup is designed to run on AMD GPUs (ROCm). Specifically the `gfx1151` (St
 - **wyoming-whisper** - Speech-to-Text on port `10300` (CTranslate2 + Whisper)
 - **wyoming-moonshine** - Real-time STT on port `10302` (Moonshine ONNX, CPU-only, ultra-low latency)
 - **wyoming-parakeet** - STT on port `10303` (NVIDIA NeMo parakeet-tdt-0.6b-v3, GPU-accelerated)
+- **parakeet-vanilla** - OpenAI-compatible Parakeet STT on port `10314` (`POST /v1/audio/transcriptions` or `POST /audio/transcriptions`)
 - **wyoming-granite** - STT on port `10304` (IBM granite-speech-4.1-2b-nar, GPU-accelerated)
 - **wyoming-gemma-asr** - STT on port `10305` (lightweight Wyoming shim for external llama.cpp Gemma audio server)
 - **wyoming-voxtral** (Not working yet) - Real-time STT on port `10301` (vLLM + Mistral Voxtral, <500ms latency)
@@ -83,6 +84,8 @@ Available environment variables:
 - `PARAKEET_MODEL` - HuggingFace model ID (default: nvidia/parakeet-tdt-0.6b-v3)
 - `PARAKEET_DEVICE` - cuda:0 (GPU) or cpu
 - `PARAKEET_DEBUG` - true/false
+
+`parakeet-vanilla` runs a separate HTTP-only model instance for non-Home-Assistant clients. Point clients at `http://your-docker-host:10314/v1/audio/transcriptions` (or the unversioned `/audio/transcriptions` endpoint). Configure it with `PARAKEET_VANILLA_PORT`, `PARAKEET_VANILLA_MODEL`, `PARAKEET_VANILLA_DEVICE`, and `PARAKEET_VANILLA_DEBUG`. It needs an additional ~2GB of GPU memory.
 
 **Features:**
 - NVIDIA NeMo TDT (Token-and-Duration Transducer) architecture

@@ -107,6 +107,10 @@ async def _run_openai_server(uri: str, transcriber: ParakeetTranscriber) -> None
         "/v1/audio/transcriptions",
         partial(_handle_transcription, transcriber=transcriber),
     )
+    app.router.add_post(
+        "/audio/transcriptions",
+        partial(_handle_transcription, transcriber=transcriber),
+    )
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -129,7 +133,7 @@ async def main() -> None:
         description="Parakeet TDT STT Wyoming Protocol Server"
     )
     parser.add_argument(
-        "--uri", required=True, help="URI to bind to (e.g., tcp://0.0.0.0:10303)"
+        "--uri", help="Optional Wyoming bind URI (e.g., tcp://0.0.0.0:10303)"
     )
     parser.add_argument(
         "--openai-uri",
@@ -145,6 +149,8 @@ async def main() -> None:
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
+    if not args.uri and not args.openai_uri:
+        parser.error("at least one of --uri or --openai-uri is required")
 
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.INFO,
@@ -223,11 +229,12 @@ async def main() -> None:
         transcriber=transcriber,
     )
 
-    _LOGGER.info("Server starting on %s", args.uri)
-    server = AsyncServer.from_uri(args.uri)
-
     try:
-        tasks = [asyncio.create_task(server.run(handler_factory))]
+        tasks = []
+        if args.uri:
+            _LOGGER.info("Wyoming server starting on %s", args.uri)
+            server = AsyncServer.from_uri(args.uri)
+            tasks.append(asyncio.create_task(server.run(handler_factory)))
         if args.openai_uri:
             tasks.append(
                 asyncio.create_task(_run_openai_server(args.openai_uri, transcriber))
